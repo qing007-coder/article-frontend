@@ -16,6 +16,7 @@ const formModel = ref({
   account: '',
   password: '',
   repassword: '',
+  name: '',
   verifyCode: ''
 })
 const rules = {
@@ -25,6 +26,10 @@ const rules = {
   account: [
     {required: true, message: '请输入账号', trigger: 'blur'},
     {min: 5, max: 10, message: '账号是5-10位字符', trigger: 'blur'}
+  ],
+  name: [
+    {required: true, message: '请输入昵称', trigger: 'blur'},
+    {min: 2, max: 10, message: '账号是5-10位字符', trigger: 'blur'}
   ],
   password: [
     {required: true, message: '请输入密码', trigger: 'blur'},
@@ -159,6 +164,14 @@ const countdown = () => {
             class="inp" 
             v-model="formModel.account"
             placeholder="请输入账号" 
+            :prefix-icon="User"
+            />
+          </el-form-item>
+          <el-form-item prop="name">
+            <el-input
+            class="inp" 
+            v-model="formModel.name"
+            placeholder="请输入昵称" 
             :prefix-icon="User"
             />
           </el-form-item>

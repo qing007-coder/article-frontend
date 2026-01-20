@@ -4,8 +4,8 @@ export const getVerifyCode = ({email}) =>
   request.post('/public/send_verification', {email})
 
 // 注册接口
-export const userRegisterService = ({email, account, password, verifyCode}) => 
-  request.post('/public/register', {email, account, password, verifyCode})
+export const userRegisterService = ({name, email, account, password, verifyCode}) => 
+  request.post('/public/register', {name, email, account, password, verifyCode})
 
 // 登录接口
 export const userLoginService = ({account, password}) => 

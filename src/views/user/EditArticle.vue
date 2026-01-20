@@ -3,25 +3,22 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 
-// 假设有 API 文件
 import { getArticleAllInfo, updateArticle } from '@/api/article.js'
 
-// 路由对象
 const route = useRoute()
 const router = useRouter()
 
-// 表单数据
 const form = ref({
   id: '',
   title: '',
   content: '',
 })
 
-
-// 加载文章详情
+// 加载文章
 const loadArticle = async () => {
   const id = route.params.articleId
   if (!id) return
+
   const res = await getArticleAllInfo(id)
   if (res.data.status === 200) {
     Object.assign(form.value, res.data.data.article)
@@ -30,99 +27,120 @@ const loadArticle = async () => {
   }
 }
 
-// 保存修改
+// 保存
 const saveArticle = async () => {
   const res = await updateArticle({
     id: form.value.id,
     title: form.value.title,
     content: form.value.content,
   })
+
   if (res.data.status === 200) {
     ElMessage.success('保存成功')
-    router.push('/user/manage') // 返回列表页
+    router.push('/user/manage')
   } else {
     ElMessage.error(res.data.message || '保存失败')
   }
 }
 
-// 挂载后加载文章
 onMounted(loadArticle)
 </script>
 
 <template>
-  <div class="article-editor">
-    <el-card shadow="hover" class="editor-card">
-      <h2 class="title">编辑文章</h2>
+  <div class="article-editor-wrapper">
+    <div class="editor-card">
+      <!-- 头部 -->
+      <div class="editor-header">
+        <h2>编辑文章</h2>
+        <p>修改文章标题和正文内容</p>
+      </div>
 
-      <el-form label-width="100px" :model="form" class="editor-form">
+      <!-- 表单 -->
+      <el-form :model="form" label-width="80px" class="editor-form">
         <el-form-item label="标题">
-          <el-input v-model="form.title" placeholder="请输入文章标题" />
+          <el-input
+            v-model="form.title"
+            size="large"
+            maxlength="100"
+            show-word-limit
+            placeholder="请输入文章标题"
+          />
         </el-form-item>
 
         <el-form-item label="内容">
           <el-input
-            type="textarea"
             v-model="form.content"
-            :rows="12"
+            type="textarea"
+            :rows="16"
+            maxlength="100000"
+            show-word-limit
             placeholder="请输入文章内容..."
           />
         </el-form-item>
 
+        <!-- 操作区 -->
         <el-form-item>
           <div class="button-group">
-            <el-button type="primary" @click="saveArticle">保存</el-button>
-            <el-button @click="router.back()">取消</el-button>
+            <el-button type="primary" size="large" @click="saveArticle">
+              保存修改
+            </el-button>
+            <el-button size="large" @click="router.back()">
+              取消
+            </el-button>
           </div>
         </el-form-item>
       </el-form>
-    </el-card>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.article-editor {
-  padding: 20px;
+/* 整体背景 */
+.article-editor-wrapper {
+  min-height: 100vh;
+  padding: 32px;
+  background: linear-gradient(180deg, #f5f7fa 0%, #eef1f6 100%);
   display: flex;
   justify-content: center;
+  align-items: flex-start;
 }
 
+/* 卡片 */
 .editor-card {
-  width: 800px;
-  border-radius: 12px;
-  padding: 20px;
+  width: 900px;
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 32px 36px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
-.title {
-  font-size: 20px;
-  margin-bottom: 20px;
-  font-weight: bold;
+/* 头部 */
+.editor-header {
+  margin-bottom: 28px;
 }
 
-.cover-uploader {
-  width: 200px;
-  height: 120px;
-  border: 1px dashed #ccc;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  overflow: hidden;
-  transition: all 0.3s;
+.editor-header h2 {
+  margin: 0;
+  font-size: 1.6rem;
+  color: #1f2329;
 }
 
-.cover-uploader:hover {
-  border-color: #409eff;
+.editor-header p {
+  margin-top: 6px;
+  font-size: 0.9rem;
+  color: #8a919f;
 }
 
-.cover-preview {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+/* 表单 */
+.editor-form {
+  margin-top: 10px;
 }
 
+/* 按钮区 */
 .button-group {
   display: flex;
-  gap: 10px;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
 }
 </style>
