@@ -1,6 +1,6 @@
 # FrontEnd
 
-This template should help get you started developing with Vue 3 in Vite.
+An article communication system front-end
 
 ## Recommended IDE Setup
 
