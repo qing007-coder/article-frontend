@@ -2,30 +2,60 @@
 import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router'
 import { getArticleAllInfo } from '@/api/article.js'
+import {createLikeService, deleteLikeService, addRead, isLikedService} from '@/api/like.js'
+import CommentBox from '@/components/CommentBox.vue'
 
 const route = new useRoute()
 
 const data = ref({
   article: {
-    ArticleId: '',
-    Author: '',
-    Time: '',
-    Content: '',
-    Like: 0,
-    Read: 0,
-    Title: ''
+    id: '',
+    author_id: '',
+    time: '',
+    content: '',
+    like: 0,
+    read: 0,
+    title: ''
   },
   author: {
     Account: '',
     Password: '',
     Email: '',
+    Read: 0,
+    Like: 0,
+    Article: 0,
   }
 })
+
+// 点赞状态
+const isLiked = ref(false)
+// 点赞数量（初始值假设是 10）
+const likeCount = ref(0)
+
 onMounted(async () => {
-  const res = await getArticleAllInfo(route.params.articleId)
-  data.value = res.data.data
-  console.log(res.data.data);
+  const article_id = route.params.articleId
+  const articleRes = await getArticleAllInfo(article_id)
+  data.value = articleRes.data.data
+  likeCount.value = articleRes.data.data.article.like
+
+  await addRead(article_id)
+
+  const likedRes = await isLikedService(article_id)
+  isLiked.value = likedRes.data.data.liked
 })
+
+
+// 切换点赞
+const toggleLike = () => {
+  if (isLiked.value) {
+    likeCount.value--
+    deleteLikeService(route.params.articleId)
+  } else {
+    likeCount.value++
+    createLikeService(route.params.articleId)
+  }
+  isLiked.value = !isLiked.value
+}
 </script>
 
 <template>
@@ -37,19 +67,32 @@ onMounted(async () => {
         />
         <div>{{ data.author.Account }}|{{ data.author.Email }}</div>
         <ul>
-          <li>总阅览数</li>
-          <li>总点赞数</li>
-          <li>发布文章数</li>
+          <li>总阅览数  {{ data.author.Read }}</li>
+          <li>总点赞数  {{ data.author.Like}}</li>
+          <li>发布文章数  {{ data.author.Article }}</li>
         </ul>
+
+        <div class="like-container">
+          <!-- 点赞按钮 -->
+          <button 
+            :class="['like-btn', { active: isLiked }]" 
+            @click="toggleLike"
+          >
+            👍 {{ likeCount }}
+          </button>
+        </div>
+        
       </div>
     </el-col>
     <el-col :span="10">
-    <div id="contentContainer">
-      <h1>{{ data.article.title }}</h1>
-      <p>{{ data.article.content }}</p>
-    </div>
+      <div id="contentContainer">
+        <h1>{{ data.article.title }}</h1>
+        <p>{{ data.article.content }}</p>
+      </div>
     </el-col>
-    <el-col :span="7"></el-col>
+    <el-col :span="7">
+      <CommentBox />
+    </el-col>
   </el-row>
 </template>
 
@@ -77,5 +120,25 @@ h1{
 #contentContainer{
   height: 780px;
   background-color: rgba(255, 255, 255, .65);
+}
+
+.like-container {
+  display: flex;
+  align-items: center;
+}
+
+.like-btn {
+  background: #f0f0f0;
+  border: 1px solid #ddd;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.like-btn.active {
+  background: #ff4d4f;
+  color: #fff;
+  border-color: #ff4d4f;
 }
 </style>

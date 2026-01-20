@@ -6,7 +6,7 @@ const userAllInfo = ref({})
 onMounted(
   async () => {
     const res = await userAllInfoService()
-    userAllInfo.value = res.data.data
+    userAllInfo.value = res.data.data.data
     console.log(userAllInfo.value);
   }
 )
@@ -20,13 +20,13 @@ onMounted(
         src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"
       /></div>
     <div>
-      <span>账号{{ userAllInfo.Account }}</span>|<span>邮箱{{ userAllInfo.Email }}</span>
+      <span>账号  {{ userAllInfo.Account }}</span>|<span>邮箱  {{ userAllInfo.Email }}</span>
     </div>
     <div>
       <ul>
-        <li>发布文章数{{ userAllInfo.ArticleTotal }}</li>
-        <li>浏览数{{ userAllInfo.ReadTotal }}</li>
-        <li>点赞数{{ userAllInfo.LikeTotal }}</li>
+        <li>发布文章数{{ userAllInfo.Article }}</li>
+        <li>浏览数{{ userAllInfo.Read }}</li>
+        <li>点赞数{{ userAllInfo.Like }}</li>
       </ul>
     </div>
   </div>

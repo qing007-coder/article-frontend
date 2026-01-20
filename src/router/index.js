@@ -29,13 +29,25 @@ const router = createRouter({
         {
           path: '/privilege/getArticleInQueue',
           component: () => import('@/views/privilege/ArticleQueue.vue')
+        },
+        {
+          path: '/user/manage',
+          component: () => import('@/views/user/ManageArticle.vue')
         }
       ]
     },
     {
       path: '/article/main/:articleId',
       component: () => import('@/views/article/ArticleContent.vue')
-    }
+    },
+    {
+      path: '/privilege/getArticleInQueue/:articleId',
+      component: () => import('@/views/privilege/ArticleDetail.vue')
+    },
+    {
+      path: '/user/manage/article/:articleId',
+      component: () => import('@/views/user/EditArticle.vue')
+    },
   ]
 })
 

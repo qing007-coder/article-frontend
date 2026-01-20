@@ -1,70 +1,110 @@
+<template>
+  <div class="article-list-page">
+    <!-- 搜索区 -->
+    <div class="search-bar">
+      <el-input
+        v-model="keyword"
+        placeholder="请输入文章标题关键词"
+        clearable
+        prefix-icon="Search"
+        style="width: 300px; margin-right: 10px;"
+      />
+      <el-button type="primary" @click="handleSearch">搜索</el-button>
+    </div>
+
+    <!-- 文章列表 -->
+    <el-card v-for="item in articles" :key="item.id" shadow="hover" class="article-item" @click="$router.push(`/article/main/${item.id}`)">
+      <div class="article-header">
+        <h3 class="title">{{ item.title }}</h3>
+        <div class="meta">
+          <span>👍 {{ item.like }}</span>
+          <span>👁️ {{ item.read }}</span>
+          <span>{{ formatTime(item.time) }}</span>
+        </div>
+      </div>
+      <div class="content">
+        {{ item.content }}
+      </div>
+    </el-card>
+
+    <!-- 无数据时 -->
+    <el-empty v-if="articles.length === 0" description="暂无文章" />
+  </div>
+</template>
+
 <script setup>
-import PostCover from '@/components/PostCover.vue';
-import { getArticleService } from '@/api/article.js';
-import {  ref } from 'vue';
+import { ref, onMounted } from 'vue'
+import { searchArticleService } from '@/api/article.js'
 
-const data = ref([])
+const articles = ref([])       // 后端返回的所有文章
+const keyword = ref('')           // 搜索关键词
 
-// onMounted(async () => {
-//   const res = await getArticleService()
-//   data.value = res.data.data.data
-//   console.log(data.value);
-// })
-
-const addData = async () => {
-  const res = await getArticleService()
-  data.value.push(...res.data.data.data)
+// 获取后端数据
+const loadArticles = async () => {
+  const res = await searchArticleService("")
+  articles.value = res.data.data.data
 }
 
+const handleSearch = async () => {
+  const res = await searchArticleService(keyword.value)
+  articles.value = res.data.data.data
+}
+
+onMounted(() => {
+  loadArticles()
+})
+
+
+// 时间格式化
+const formatTime = (timeStr) => {
+  const date = new Date(timeStr)
+  return date.toLocaleString('zh-CN', { hour12: false })
+}
 </script>
 
-
-<template>
-  <ul v-infinite-scroll="addData" class="infinite-list" style="overflow: auto">
-    <li v-for="item in data" :key="item.id" class="infinite-list-item">
-      <PostCover @click="$router.push({
-        path: `/article/main/${item.id}`
-      })">
-        <template #Author>
-          {{ item.author_id }}
-        </template>
-      
-        <template #Title>
-          {{ item.title }}
-        </template>
-      
-        <template #Read>
-          {{ item.read }}
-        </template>
-      
-        <template #Like>
-          {{ item.like }}
-        </template>
-      </PostCover>
-    </li>
-  </ul>
-</template> 
-
 <style scoped>
-.infinite-list {
-  height: 700px;
-  padding: 0;
-  margin: 0;
-  list-style: none;
+.article-list-page {
+  padding: 20px;
+  max-width: 900px;
+  margin: 0 auto;
 }
-.infinite-list .infinite-list-item {
+
+.search-bar {
   display: flex;
   align-items: center;
-  justify-content: center;
-  height: 200px;
-  /* background: var(--el-color-primary-light-9); */
-  margin: 10px;
-  /* color: var(--el-color-primary); */
+  margin-bottom: 20px;
 }
-.infinite-list-item{
-  height: 170px;
+
+.article-item {
+  margin-bottom: 15px;
 }
-.infinite-list .infinite-list-item + .list-item {
-  margin-top: 10px;
+
+.article-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  color: #333;
+}
+
+.meta {
+  font-size: 13px;
+  color: #999;
+}
+
+.meta span {
+  margin-left: 10px;
+}
+
+.content {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #555;
+  line-height: 1.6;
 }
 </style>

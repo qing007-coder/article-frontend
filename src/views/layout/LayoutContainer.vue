@@ -45,6 +45,7 @@ onMounted(
           <el-menu-item-group title="">
             <el-menu-item index="/user/profile">详细资料</el-menu-item>
             <el-menu-item index="/user/password">密码修改</el-menu-item>
+            <el-menu-item index="/user/manage">文章管理</el-menu-item>
           </el-menu-item-group>
         </el-sub-menu>
       </el-menu>
