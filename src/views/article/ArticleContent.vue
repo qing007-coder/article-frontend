@@ -9,12 +9,14 @@
     <el-row :gutter="24" class="main-layout">
       <el-col :span="6">
         <div class="side-card author-card">
-          <div class="avatar-wrapper">
+          <div class="avatar-wrapper" @click="goToProfile(data.article.author_id)">
             <el-avatar :size="80" src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png" />
             <el-tag size="small" type="success" class="status-badge">作者</el-tag>
           </div>
           
-          <h3 class="author-name">{{ data.author.Account || '未知用户' }}</h3>
+          <h3 class="author-name" @click="goToProfile(data.author.ID)">
+            {{ data.author.Name || data.author.Account || '未知用户' }}
+          </h3>
           <p class="author-email">{{ data.author.Email }}</p>
 
           <div class="author-stats">
@@ -52,7 +54,7 @@
         <div class="content-card">
           <h1 class="article-title">{{ data.article.title }}</h1>
           <div class="article-info">
-            <span>发布于 {{ new Date(data.article.time).toLocaleDateString() }}</span>
+            <span>发布于 {{ formatDate(data.article.time) }}</span>
             <el-divider direction="vertical" />
             <span><el-icon><View /></el-icon> {{ data.article.read }} 次阅读</span>
           </div>
@@ -68,9 +70,12 @@
       <el-col :span="7">
         <div class="side-card comment-wrapper">
           <div class="side-header">
-            <el-icon><Comment /></el-icon> 互动交流
+            <el-icon><CommentIcon /></el-icon> 互动交流
           </div>
-          <CommentBox :article-id="route.params.articleId" />
+          <CommentBox 
+            :article-id="route.params.articleId" 
+            @user-click="goToProfile"
+          />
         </div>
       </el-col>
     </el-row>
@@ -79,35 +84,51 @@
 
 <script setup>
 import { onMounted, ref } from 'vue';
-import { useRoute } from 'vue-router'
-import { ArrowLeft, Star, StarFilled, View, Comment } from '@element-plus/icons-vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ArrowLeft, Star, StarFilled, View, Comment as CommentIcon } from '@element-plus/icons-vue'
 import { getArticleAllInfo } from '@/api/article.js'
 import { createLikeService, deleteLikeService, addRead, isLikedService } from '@/api/like.js'
 import CommentBox from '@/components/CommentBox.vue'
 
 const route = useRoute()
+const router = useRouter()
 
+// 初始化结构需匹配你的 JSON
 const data = ref({
   article: { id: '', author_id: '', time: '', content: '', like: 0, read: 0, title: '' },
-  author: { Account: '', Email: '', Read: 0, Like: 0, Article: 0 }
+  author: { ID: '', Account: '', Name: '', Email: '', Read: 0, Like: 0, Article: 0 }
 })
 
 const isLiked = ref(false)
 const likeCount = ref(0)
-const loading = ref(true)
+
+// 核心跳转逻辑
+const goToProfile = (userId) => {
+  console.log("正在跳转到用户ID:", userId)
+  if (!userId) return
+  // 跳转到你定义的他人主页路由
+  router.push(`/user/profile/${userId}`)
+}
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
+}
 
 onMounted(async () => {
   const article_id = route.params.articleId
   try {
-    const articleRes = await getArticleAllInfo(article_id)
-    data.value = articleRes.data.data
-    likeCount.value = articleRes.data.data.article.like
+    const res = await getArticleAllInfo(article_id)
+    // 这里的赋值层级必须是 res.data.data
+    data.value = res.data.data
+    likeCount.value = data.value.article.like
 
     await addRead(article_id)
     const likedRes = await isLikedService(article_id)
     isLiked.value = likedRes.data.data.liked
-  } finally {
-    loading.value = false
+  } catch (err) {
+    console.error("获取详情失败", err)
   }
 })
 
@@ -124,131 +145,25 @@ const toggleLike = () => {
 </script>
 
 <style scoped>
-.detail-wrapper {
-  padding: 20px;
-  background-color: #f0f2f5;
-  min-height: 100vh;
-}
+.detail-wrapper { padding: 20px; background-color: #f0f2f5; min-height: 100vh; }
+.back-bar { margin-bottom: 20px; }
+.side-card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
 
-.back-bar {
-  margin-bottom: 20px;
-}
+/* 跳转相关的鼠标手势 */
+.avatar-wrapper, .author-name { cursor: pointer; transition: 0.3s; }
+.author-name:hover { color: #409EFF; }
 
-.side-card {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-}
+.author-card { text-align: center; position: sticky; top: 20px; }
+.author-stats { display: flex; justify-content: space-around; margin: 24px 0; padding: 16px 0; border-top: 1px dashed #ebeef5; border-bottom: 1px dashed #ebeef5; }
+.stat-item .num { font-weight: bold; font-size: 1.1rem; color: #303133; }
+.stat-item .label { font-size: 0.75rem; color: #909399; }
+.huge-like-btn { width: 100%; height: 45px; }
 
-/* 作者卡片 */
-.author-card {
-  text-align: center;
-  position: sticky;
-  top: 20px;
-}
+.content-card { background: white; border-radius: 12px; padding: 40px; min-height: 800px; }
+.article-title { font-size: 1.8rem; line-height: 1.4; color: #1a1a1a; margin-bottom: 16px; }
+.article-info { font-size: 0.9rem; color: #8a919f; margin-bottom: 20px; }
+.rich-text { font-size: 1.1rem; line-height: 1.8; color: #333; white-space: pre-wrap; text-align: left; }
 
-.avatar-wrapper {
-  position: relative;
-  display: inline-block;
-  margin-bottom: 16px;
-}
-
-.status-badge {
-  position: absolute;
-  bottom: 0;
-  right: -5px;
-}
-
-.author-name {
-  margin: 0;
-  font-size: 1.2rem;
-  color: #303133;
-}
-
-.author-email {
-  font-size: 0.85rem;
-  color: #909399;
-  margin-top: 4px;
-}
-
-.author-stats {
-  display: flex;
-  justify-content: space-around;
-  margin: 24px 0;
-  padding: 16px 0;
-  border-top: 1px dashed #ebeef5;
-  border-bottom: 1px dashed #ebeef5;
-}
-
-.stat-item .num {
-  font-weight: bold;
-  font-size: 1.1rem;
-  color: #303133;
-}
-
-.stat-item .label {
-  font-size: 0.75rem;
-  color: #909399;
-}
-
-.huge-like-btn {
-  width: 100%;
-  height: 45px;
-  font-size: 1rem;
-}
-
-/* 内容卡片 */
-.content-card {
-  background: white;
-  border-radius: 12px;
-  padding: 40px;
-  min-height: 800px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-}
-
-.article-title {
-  font-size: 2rem;
-  line-height: 1.4;
-  color: #1a1a1a;
-  margin-bottom: 16px;
-  text-align: left;
-}
-
-.article-info {
-  font-size: 0.9rem;
-  color: #8a919f;
-  display: flex;
-  align-items: center;
-}
-
-.article-body {
-  margin-top: 30px;
-}
-
-.rich-text {
-  font-size: 1.1rem;
-  line-height: 2;
-  color: #333;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-/* 评论区 */
-.comment-wrapper {
-  height: calc(100vh - 120px);
-  overflow-y: auto;
-  position: sticky;
-  top: 20px;
-}
-
-.side-header {
-  font-weight: bold;
-  font-size: 1.1rem;
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #303133;
-}
+.comment-wrapper { height: calc(100vh - 120px); overflow-y: auto; position: sticky; top: 20px; }
+.side-header { font-weight: bold; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
 </style>

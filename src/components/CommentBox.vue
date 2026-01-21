@@ -1,134 +1,89 @@
+<template>
+  <div class="comment-box-inner">
+    <div class="input-area">
+      <el-input
+        v-model="newComment"
+        type="textarea"
+        placeholder="写下你的看法..."
+        :rows="3"
+        resize="none"
+      />
+      <el-button type="primary" size="small" @click="addComment" :disabled="!newComment.trim()">
+        发表评论
+      </el-button>
+    </div>
+
+    <el-divider />
+
+    <div class="comment-list">
+      <div v-for="item in comments" :key="item.ID" class="comment-item">
+        <el-avatar 
+          :size="32" 
+          src="https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png" 
+          @click="$emit('user-click', item.user_id)"
+        />
+        <div class="c-main">
+          <div class="c-header">
+            <span class="c-name" @click="$emit('user-click', item.user_id)">
+              {{ item.name || '用户: ' + item.user_id }}
+            </span>
+            <span class="c-time">{{ formatTime(item.CreatedAt) }}</span>
+          </div>
+          <div class="c-text">{{ item.content }}</div>
+        </div>
+      </div>
+      <el-empty v-if="comments.length === 0" description="暂无评论" :image-size="60" />
+    </div>
+  </div>
+</template>
+
 <script setup>
 import { ref, onMounted } from "vue"
 import { useRoute } from 'vue-router'
-import { sendCommentService, deleteCommentService, getCommentListService } from '@/api/comment.js'
+import { sendCommentService, getCommentListService } from '@/api/comment.js'
 
-// 评论输入框
+const props = defineProps(['articleId'])
+const emit = defineEmits(['user-click']) // 声明点击事件通知父组件
+
 const newComment = ref("")
-// 评论列表
 const comments = ref([])
-const route = new useRoute()
+const route = useRoute()
 
-// 加载评论列表
 const loadComments = async () => {
-  
   try {
     const res = await getCommentListService(route.params.articleId)
-    comments.value = []
-    comments.value.push(...res.data.data.list)
+    // 根据你的返回格式 res.data.data.list
+    comments.value = res.data.data.list || []
   } catch (err) {
     console.error("加载评论失败", err)
   }
 }
 
-// 添加评论
 const addComment = async () => {
   if (!newComment.value.trim()) return
-
-  try {
-    const res = await sendCommentService({ 
-      content: newComment.value.trim(), 
-      article_id: route.params.articleId,   // 这里用 key: value
-    })
-
-    console.log(route.params.articleId)
-    // 方式1：重新拉评论列表
-    loadComments()
-    // 方式2：也可以直接 push 新评论
-    // comments.value.push(res.data)
-
+  const res = await sendCommentService({ 
+    content: newComment.value.trim(), 
+    article_id: route.params.articleId 
+  })
+  if (res.data.status === 200) {
     newComment.value = ""
-  } catch (err) {
-    console.error("发送评论失败", err)
+    loadComments()
   }
 }
 
+const formatTime = (t) => t ? t.split('T')[0] : ''
 
-// 页面加载时获取评论
-onMounted(() => {
-  loadComments()
-})
+onMounted(loadComments)
 </script>
 
-<template>
-  <div class="comment-section">
-    <!-- 输入框 -->
-    <div>
-      <input class="comment-input"
-        v-model="newComment"
-        placeholder="写下你的评论..."
-      />
-      <button @click="addComment">发送</button>
-    </div>
-
-    <!-- 评论列表 -->
-    <ul class="comment-list">
-      <li v-for="item in comments" :key="item.id" class="comment-item">
-        <span>{{ item.user_id }}: {{ item.content }}</span>
-      </li>
-    </ul>
-  </div>
-</template>
-
-
 <style scoped>
-.comment-box {
-  width: 400px;
-  margin: auto;
-  padding: 16px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  background: #fafafa;
-}
-
-.comment-input {
-  width: 100%;
-  height: 60px;
-  padding: 8px;
-  margin-bottom: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  resize: none;
-  outline: none;
-}
-
-button {
-  padding: 6px 12px;
-  margin-top: 4px;
-  cursor: pointer;
-  border: none;
-  border-radius: 4px;
-}
-
-button:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-}
-
-.comment-list {
-  list-style: none;
-  padding: 0;
-  margin-top: 12px;
-}
-
-.comment-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #fff;
-  margin-bottom: 6px;
-  padding: 6px 10px;
-  border-radius: 4px;
-  border: 1px solid #eee;
-}
-
-.comment-text {
-  flex: 1;
-  margin-right: 8px;
-}
-
-.delete-btn {
-  background: #ff6b6b;
-  color: white;
-}
+.input-area { text-align: right; }
+.el-button { margin-top: 8px; }
+.comment-item { display: flex; gap: 10px; margin-bottom: 15px; text-align: left; }
+.c-main { flex: 1; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; }
+.c-header { display: flex; justify-content: space-between; margin-bottom: 4px; }
+.c-name { font-size: 13px; font-weight: bold; color: #409EFF; cursor: pointer; }
+.c-time { font-size: 11px; color: #999; }
+.c-text { font-size: 14px; color: #333; line-height: 1.5; }
+.el-avatar { cursor: pointer; }
 </style>

@@ -22,3 +22,44 @@ export const modifyPasswordService = ({oldPassword, newPassword}) =>
 
 export const getUserArticle = (value) => 
   request.get(`/user/get_user_article?value=${value}`)
+
+export const getOtherUserInfoService = (uid) => 
+  request.get(`/user/get_other_user_detail/${uid}`)
+
+// 获取关注列表
+export function getFollowListService() {
+  return request({
+    url: '/user/get_follow_list',
+    method: 'get'
+  })
+}
+
+
+export function createFollowService(authorId) {
+  return request({
+    url: '/user/create_follow',
+    method: 'post',
+    data: {
+      author_id: authorId
+    }
+  })
+}
+
+// 取消关注
+export function deleteFollowService(authorId) {
+  return request({
+    url: `/user/delete_follow/${authorId}`,
+    method: 'get'
+  })
+}
+
+export const getAuthorArticle = (value) => 
+  request.get(`/article/get_author_article/${value}`)
+
+// 判断是否关注了该作者
+export const isFollowedService = (authorId) => 
+  request.get(`/user/is_followed/${authorId}`)
+
+// 修改个人资料接口
+export const editProfileService = ({id, name, info}) => 
+  request.post('/user/edit_profile', {id, name, info})
